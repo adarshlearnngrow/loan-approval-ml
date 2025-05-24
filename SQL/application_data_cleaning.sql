@@ -1,4 +1,7 @@
 
+CREATE INDEX idx_sk_id_curr ON ln_application_data(SK_ID_CURR);
+
+
 --Checking duplicate values, none found
 SELECT count(SK_ID_CURR) FROM ln_application_data GROUP BY SK_ID_CURR having count(SK_ID_CURR)>1
 
@@ -252,8 +255,8 @@ where DAYS_REGISTRATION  is NULL
 EXEC sp_rename 'dbo.ln_application_data.avg_external_rating', 'AVERAGE_EXTERNAL_RATING', 'COLUMN';
 
 
-select * from dbo.ln_application_data
-where average_external_rating is null
+select TOP 100 * from dbo.ln_application_data
+where AMT_ANNUITY is null
 
 
 
