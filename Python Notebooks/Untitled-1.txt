@@ -1,6 +1,0 @@
-<VSCode.Cell language="python">
-# Test output display in notebook
-import pandas as pd
-df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-df
-</VSCode.Cell>
