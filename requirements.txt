@@ -7,4 +7,3 @@ scipy
 scikit-learn
 openpyxl
 sqlalchemy
-python-dotenv

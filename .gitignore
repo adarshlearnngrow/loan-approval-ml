@@ -1,0 +1,36 @@
+# Ignore Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore virtual environments
+venv/
+env/
+loan_approval_env/
+
+# Ignore data and output files
+*.sqlite3
+*.db
+*.log
+*.csv
+*.xlsx
+
+# Ignore secrets and credentials
+*.key
+*.pem
+
+# Ignore requirements in subfolders (if not needed)
+Python Notebooks/requirements.txt
