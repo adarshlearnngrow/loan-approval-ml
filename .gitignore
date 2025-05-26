@@ -32,5 +32,3 @@ loan_approval_env/
 *.key
 *.pem
 
-# Ignore requirements in subfolders (if not needed)
-Python Notebooks/requirements.txt
