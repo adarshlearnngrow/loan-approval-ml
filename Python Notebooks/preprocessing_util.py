@@ -32,5 +32,5 @@ def get_transformers(log_col, scale_only_cols, categorical_cols):
     return [
         ('log_scale_pipeline', log_pipeline, log_col),
         ('scale_only', scale_only_pipeline, scale_only_cols),
-        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse=False), categorical_cols)
+        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_cols)
     ]
