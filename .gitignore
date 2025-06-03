@@ -31,4 +31,10 @@ loan_approval_env/
 # Ignore secrets and credentials
 *.key
 *.pem
+*.ppk
+*.key
+id_rsa
+id_rsa.pub
+creditriskmodelling_key
+creditriskmodelling_key.pub
 
