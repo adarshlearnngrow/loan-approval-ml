@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, OneHotEncoder
 
-log_cols = ['AMT_INCOME_TOTAL', 'AMT_CREDIT', 'AMT_ANNUITY', 'AMT_GOODS_PRICE']
+log_cols = ['AMT_INCOME_TOTAL', 'AMT_CREDIT', 'AMT_ANNUITY', 'AMT_GOODS_PRICE', 'YEARS_EMPLOYED', 'YEARS_LAST_PHONE_CHANGE', 'YEARS_REGISTRATION']
 
 def get_column_groups(X):
     
@@ -23,14 +23,19 @@ log_pipeline = Pipeline([
     ('scale', StandardScaler())
 ])
 
+binary_passthrough = Pipeline([
+    ('identity', FunctionTransformer(validate=True))
+])
+
 scale_only_pipeline = Pipeline([
     ('scale', StandardScaler())
 ])
 
 
-def get_transformers(log_col, scale_only_cols, categorical_cols):
+def get_transformers(log_col, scale_only_cols, categorical_cols, binary_cols):
     return [
         ('log_scale_pipeline', log_pipeline, log_col),
+         ('binary_passthrough', binary_passthrough, binary_cols),
         ('scale_only', scale_only_pipeline, scale_only_cols),
-        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_cols)
+        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first'), categorical_cols)
     ]
