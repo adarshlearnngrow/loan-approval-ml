@@ -1,0 +1,71 @@
+{
+  "CODE_GENDER": [
+    "Unspecified",
+    "F",
+    "M"
+  ],
+  "NAME_TYPE_SUITE": [
+    "Spouse, partner",
+    "Unspecified",
+    "Family",
+    "Group of people",
+    "Children",
+    "Unaccompanied",
+    "Other_A",
+    "Other_B"
+  ],
+  "NAME_INCOME_TYPE": [
+    "Businessman",
+    "Student",
+    "Unemployed",
+    "Pensioner",
+    "Commercial associate",
+    "State servant",
+    "Working",
+    "Maternity leave"
+  ],
+  "NAME_FAMILY_STATUS": [
+    "Unknown",
+    "Married",
+    "Separated",
+    "Civil marriage",
+    "Single / not married",
+    "Widow"
+  ],
+  "NAME_HOUSING_TYPE": [
+    "Rented apartment",
+    "Office apartment",
+    "With parents",
+    "House / apartment",
+    "Municipal apartment",
+    "Co-op apartment"
+  ],
+  "ORG_GROUP": [
+    "Finance",
+    "Transport",
+    "Healthcare",
+    "Unknown/Other",
+    "Public Service",
+    "Religion",
+    "Communication",
+    "Industry",
+    "Self-Employed",
+    "Construction",
+    "Trade",
+    "Education",
+    "Agriculture",
+    "Business",
+    "Services"
+  ],
+  "OCCUPATION_TYPE_GROUPED": [
+    "WhiteCollar/Admin",
+    "Labour/LowSkill",
+    "NonActive",
+    "Technical/Skilled"
+  ],
+  "EDUCATION_LEVEL": [
+    "Higher Academic",
+    "Lower Education",
+    "Medium Education"
+  ]
+}

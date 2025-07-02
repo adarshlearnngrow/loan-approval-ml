@@ -1,0 +1,10 @@
+artifact_location: file:///c:/Users/adars/Documents/Ireland_Project/Loan_approval_ml/Python%20Notebooks/mlruns/0/models/m-a20bd08dffa4422ab0ee5c64a06cfc44/artifacts
+creation_timestamp: 1751036998357
+experiment_id: '0'
+last_updated_timestamp: 1751037004235
+model_id: m-a20bd08dffa4422ab0ee5c64a06cfc44
+model_type: null
+name: model
+source_run_id: 5ed27971aa734d51b6c1a32a173f8fad
+status: 2
+status_message: null

@@ -9,3 +9,5 @@ openpyxl
 sqlalchemy
 python-dotenv
 joblib
+imblearn
+statsmodels

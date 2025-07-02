@@ -1,0 +1,18 @@
+aliases: []
+creation_timestamp: 1751495940580
+current_stage: None
+deployment_job_state: null
+description: ''
+last_updated_timestamp: 1751495940580
+metrics: null
+model_id: m-210bb3a0a6dd4e338b9918337ee3cc8f
+name: Credit Risk XGBoost Model with Undersampling
+params: null
+run_id: ''
+run_link: ''
+source: mlflow-artifacts:/330911126081939468/models/m-210bb3a0a6dd4e338b9918337ee3cc8f/artifacts
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/330911126081939468/models/m-210bb3a0a6dd4e338b9918337ee3cc8f/artifacts
+user_id: null
+version: 1
