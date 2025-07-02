@@ -1,0 +1,14 @@
+artifact_uri: file:///c:/Users/adars/Documents/Ireland_Project/Loan_approval_ml/Python%20Notebooks/mlruns/0/5ed27971aa734d51b6c1a32a173f8fad/artifacts
+end_time: 1751037004374
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5ed27971aa734d51b6c1a32a173f8fad
+run_name: Logistic with L2 Regularization
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751036979555
+status: 4
+tags: []
+user_id: adars

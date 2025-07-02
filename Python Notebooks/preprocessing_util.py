@@ -1,8 +1,14 @@
 import numpy as np
+import json
+from imports import *
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, OneHotEncoder
 
-log_cols = ['AMT_INCOME_TOTAL', 'AMT_CREDIT', 'AMT_ANNUITY', 'AMT_GOODS_PRICE', 'YEARS_EMPLOYED', 'YEARS_LAST_PHONE_CHANGE', 'YEARS_REGISTRATION']
+log_cols = ['DEBT_TO_INCOME', 'YEARS_EMPLOYED', 'YEARS_LAST_PHONE_CHANGE', 'YEARS_REGISTRATION']
+
+with open('categories.json', 'r') as f:
+    cat_col_mapping = json.load(f)
+
 
 def get_column_groups(X):
     
@@ -18,24 +24,38 @@ def get_column_groups(X):
         'categorical_cols': categorical_cols
     }
 
-log_pipeline = Pipeline([
-    ('log', FunctionTransformer(np.log1p, validate=True)),
-    ('scale', StandardScaler())
-])
 
-binary_passthrough = Pipeline([
-    ('identity', FunctionTransformer(validate=True))
-])
+def get_transformers(log_col, scale_only_cols, categorical_cols, binary_cols, model='linear'):
+    categories = [cat_col_mapping[col] for col in cat_col_mapping.keys()]
+    
+    if model == 'linear':
+        log_pipeline = Pipeline([
+            ('log', FunctionTransformer(np.log1p, validate=True)),
+            ('scale', StandardScaler())
+        ])
 
-scale_only_pipeline = Pipeline([
-    ('scale', StandardScaler())
-])
+        binary_passthrough = Pipeline([
+            ('identity', FunctionTransformer(validate=True))
+        ])
 
+        scale_only_pipeline = Pipeline([
+            ('scale', StandardScaler())
+        ])
 
-def get_transformers(log_col, scale_only_cols, categorical_cols, binary_cols):
-    return [
-        ('log_scale_pipeline', log_pipeline, log_col),
-         ('binary_passthrough', binary_passthrough, binary_cols),
-        ('scale_only', scale_only_pipeline, scale_only_cols),
-        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first'), categorical_cols)
-    ]
+        return [
+            ('log_scale_pipeline', log_pipeline, log_col),
+            ('binary_passthrough', binary_passthrough, binary_cols),
+            ('scale_only', scale_only_pipeline, scale_only_cols),
+            ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first',categories=categories), categorical_cols)
+        ]
+    
+    if model == 'tree':
+        numeric_cols = log_col + scale_only_cols + binary_cols
+        numeric_passthrough = Pipeline([
+            ('identity', FunctionTransformer(validate=True))
+        ])
+        return [
+            ('numeric_passthrough', numeric_passthrough, numeric_cols),
+            ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first',categories=categories), categorical_cols),
+
+        ]
