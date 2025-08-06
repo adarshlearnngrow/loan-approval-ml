@@ -11,3 +11,8 @@ python-dotenv
 joblib
 imblearn
 statsmodels
+shap
+mlflow
+xgboost
+streamlit
+huggingface_hub
