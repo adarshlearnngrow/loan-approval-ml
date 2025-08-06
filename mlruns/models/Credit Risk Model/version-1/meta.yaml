@@ -1,12 +1,12 @@
 aliases: []
-creation_timestamp: 1751495940580
+creation_timestamp: 1751497581451
 current_stage: None
 deployment_job_state: null
 description: ''
-last_updated_timestamp: 1751495940580
+last_updated_timestamp: 1751497581451
 metrics: null
 model_id: m-210bb3a0a6dd4e338b9918337ee3cc8f
-name: Credit Risk XGBoost Model with Undersampling
+name: Credit Risk Model
 params: null
 run_id: ''
 run_link: ''

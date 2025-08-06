@@ -51,11 +51,9 @@ def get_transformers(log_col, scale_only_cols, categorical_cols, binary_cols, mo
     
     if model == 'tree':
         numeric_cols = log_col + scale_only_cols + binary_cols
-        numeric_passthrough = Pipeline([
-            ('identity', FunctionTransformer(validate=True))
-        ])
+       
         return [
-            ('numeric_passthrough', numeric_passthrough, numeric_cols),
+            ('numeric_passthrough', 'passthrough', numeric_cols),
             ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, drop='first',categories=categories), categorical_cols),
 
         ]
