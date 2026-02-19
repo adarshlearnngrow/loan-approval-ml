@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/286339840280967947/3f8a747ee978496280c886282fadf4ae/artifacts
+end_time: 1771512665968
+entry_point_name: ''
+experiment_id: '286339840280967947'
+lifecycle_stage: active
+run_id: 3f8a747ee978496280c886282fadf4ae
+run_name: XGBoost with UnderSampling + Calibration
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771512648158
+status: 3
+tags: []
+user_id: adars

@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/330911126081939468/bcc79e053ecd4a3fa3ae8914940ecf3d/artifacts
+end_time: 1771504410237
+entry_point_name: ''
+experiment_id: '330911126081939468'
+lifecycle_stage: active
+run_id: bcc79e053ecd4a3fa3ae8914940ecf3d
+run_name: Logistic Regression L1 with SMOTE
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771504301385
+status: 3
+tags: []
+user_id: adars

@@ -1,0 +1,18 @@
+aliases: []
+creation_timestamp: 1771504874245
+current_stage: None
+deployment_job_state: null
+description: ''
+last_updated_timestamp: 1771504874245
+metrics: null
+model_id: m-9793b38f9ed148fd935404f51694cf83
+name: Credit Risk Model v3
+params: null
+run_id: ba12da70130a46fe8110b2b0c938c753
+run_link: ''
+source: models:/m-9793b38f9ed148fd935404f51694cf83
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/151309131789815813/models/m-9793b38f9ed148fd935404f51694cf83/artifacts
+user_id: null
+version: 1
