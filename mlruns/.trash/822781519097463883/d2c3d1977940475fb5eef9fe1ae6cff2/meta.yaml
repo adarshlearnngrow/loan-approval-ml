@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/822781519097463883/d2c3d1977940475fb5eef9fe1ae6cff2/artifacts
+deleted_time: 1771529924987
+end_time: 1771510579708
+entry_point_name: ''
+experiment_id: '822781519097463883'
+lifecycle_stage: deleted
+run_id: d2c3d1977940475fb5eef9fe1ae6cff2
+run_name: Logistic Regression L1 with UnderSampling + Calibration
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771510567118
+status: 3
+tags: []
+user_id: adars

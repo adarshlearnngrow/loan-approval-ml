@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/822781519097463883/ee1dbd1a496744d9bb1eb579660179f0/artifacts
+deleted_time: 1771529924987
+end_time: 1771510722146
+entry_point_name: ''
+experiment_id: '822781519097463883'
+lifecycle_stage: deleted
+run_id: ee1dbd1a496744d9bb1eb579660179f0
+run_name: Random Forest with UnderSampling + Calibration
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771510698641
+status: 3
+tags: []
+user_id: adars

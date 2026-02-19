@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/286339840280967947/93cc1b3f766442dd857fd2eef83b61cc/artifacts
+end_time: 1771512165154
+entry_point_name: ''
+experiment_id: '286339840280967947'
+lifecycle_stage: active
+run_id: 93cc1b3f766442dd857fd2eef83b61cc
+run_name: Logistic Regression L1 (Weighted)
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771512042819
+status: 3
+tags: []
+user_id: adars

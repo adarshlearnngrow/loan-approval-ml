@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/822781519097463883/60db1fecf47b4b2fa3194548437f5804/artifacts
+deleted_time: 1771529924987
+end_time: 1771510698611
+entry_point_name: ''
+experiment_id: '822781519097463883'
+lifecycle_stage: deleted
+run_id: 60db1fecf47b4b2fa3194548437f5804
+run_name: Random Forest with SMOTE
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771510620317
+status: 3
+tags: []
+user_id: adars

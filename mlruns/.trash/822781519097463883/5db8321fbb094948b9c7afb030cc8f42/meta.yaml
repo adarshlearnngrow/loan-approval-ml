@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/822781519097463883/5db8321fbb094948b9c7afb030cc8f42/artifacts
+deleted_time: 1771529924987
+end_time: 1771510620291
+entry_point_name: ''
+experiment_id: '822781519097463883'
+lifecycle_stage: deleted
+run_id: 5db8321fbb094948b9c7afb030cc8f42
+run_name: Random Forest (Weighted)
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771510579745
+status: 3
+tags: []
+user_id: adars
