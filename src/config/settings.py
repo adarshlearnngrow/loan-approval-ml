@@ -38,3 +38,8 @@ RISK_THRESHOLD_DEFAULT = 0.5
 
 # ── Feature Configuration ──────────────────────────────────────────────────────
 CATEGORIES_FILE = NB_DIR / "categories.json"
+
+# ── Exported Model (portable fallback, no mlruns/ needed) ──────────────────────
+MODEL_PKL_PATH         = PROJECT_ROOT / "models" / "model.pkl"
+MODEL_INFO_PATH        = PROJECT_ROOT / "models" / "model_info.json"
+EXPERIMENT_RUNS_PATH   = PROJECT_ROOT / "models" / "experiment_runs.json"

@@ -1,0 +1,6 @@
+{
+  "run_id": "9426c2894a7d47c6b74dcc970e3237ea",
+  "model_name": "Credit Risk Model Final",
+  "model_version": "1",
+  "f1_threshold": 0.6307744979858398
+}

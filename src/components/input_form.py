@@ -19,16 +19,10 @@ def render_input_form(categories: dict) -> dict:
     Returns:
         dict: Collected input data from form
     """
-    # Quick-fill buttons
-    col_lbl, col_random, col_sp = st.columns([2, 1, 5])
-    with col_lbl:
-        st.markdown(
-            "<div style='padding-top:0.5rem;color:#64748b;font-size:0.85rem;'>"
-            "Quick Fill:</div>",
-            unsafe_allow_html=True
-        )
-    with col_random:
-        fill_random = st.button("Generate Random", key="btn_random")
+    # Quick-fill button
+    col_btn, col_sp = st.columns([1, 7])
+    with col_btn:
+        fill_random = st.button("Quick Fill", key="btn_random", use_container_width=True)
     
     # Initialize session state
     if "D" not in st.session_state:

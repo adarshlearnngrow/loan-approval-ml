@@ -5,7 +5,7 @@ import pandas as pd
 import mlflow
 from mlflow.tracking import MlflowClient
 
-from ..config.settings import MLFLOW_TRACKING_URI, MLFLOW_EXPERIMENT_NAME
+from ..config.settings import MLFLOW_TRACKING_URI, MLFLOW_EXPERIMENT_NAME, EXPERIMENT_RUNS_PATH
 
 
 class MLflowService:
@@ -85,6 +85,48 @@ class MLflowService:
         
         return df
     
+    @staticmethod
+    def load_from_json() -> pd.DataFrame:
+        """Load experiment runs from pre-exported JSON (no MLflow server needed)."""
+        import json
+        if not EXPERIMENT_RUNS_PATH.exists():
+            return pd.DataFrame()
+        data = json.loads(EXPERIMENT_RUNS_PATH.read_text())
+        rows = []
+        for r in data.get("runs", []):
+            m = r.get("metrics", {})
+            train_ap = m.get("train_avg_precision")
+            test_ap  = m.get("test_avg_precision")
+            if test_ap is None:
+                continue
+            gap = round(train_ap - test_ap, 3) if train_ap is not None else None
+            rows.append({
+                "Model":           r.get("run_name", r["run_id"][:8]),
+                "Train AP":        round(train_ap, 3) if train_ap is not None else None,
+                "Test AP":         round(test_ap, 3),
+                "AP Gap":          gap,
+                "Test Precision":  round(m["test_precision"], 3) if m.get("test_precision") else None,
+                "Test Recall":     round(m["test_recall"], 3)    if m.get("test_recall")    else None,
+                "Test F1":         round(m["test_f1"], 3)        if m.get("test_f1")        else None,
+                "F1 Threshold":    round(m["f1_threshold"], 3)   if m.get("f1_threshold")   else None,
+                "Train F1":        round(m["train_f1"], 3)       if m.get("train_f1")       else None,
+                "Train Recall":    round(m["train_recall"], 3)   if m.get("train_recall")   else None,
+                "Train Precision": round(m["train_precision"], 3) if m.get("train_precision") else None,
+                "View":            "",
+                "Run ID":          r["run_id"][:8],
+            })
+        if not rows:
+            return pd.DataFrame()
+        df = pd.DataFrame(rows)
+        metric_cols = [
+            "Train AP", "Test AP", "AP Gap", "Test Precision", "Test Recall",
+            "Test F1", "F1 Threshold", "Train F1", "Train Recall", "Train Precision"
+        ]
+        for col in metric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+
     def get_best_model_info(self, df: pd.DataFrame) -> dict:
         """Get information about the best performing model"""
         if df.empty:

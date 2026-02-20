@@ -1,4 +1,4 @@
-# 🏦 Credit Risk Predictor
+# Credit Risk Predictor
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io/)
@@ -9,24 +9,22 @@ An AI-powered credit risk assessment system with explainable ML, real-time predi
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Executive Summary](#executive-summary)
 2. [Business Problem & Decision Made](#business-problem--decision-made)
 3. [Dataset Overview](#dataset-overview)
 4. [Feature Engineering](#feature-engineering)
 5. [Model Training & Selection](#model-training--selection)
-6. [Model Logs & Experiment Tracking](#model-logs--experiment-tracking)
+6. [Threshold Tuning & MLflow Tracking](#threshold-tuning--mlflow-tracking)
 7. [Risk Identification](#risk-identification)
 8. [Business Usability](#business-usability)
-9. [Financial Impact & Money Saved](#financial-impact--money-saved)
+9. [Financial Impact](#financial-impact)
 10. [Can It Replace Human Decision-Making?](#can-it-replace-human-decision-making)
 11. [AI-Powered Report Generation](#ai-powered-report-generation)
-12. [RAG for Internal Teams](#rag-for-internal-teams)
-13. [Installation & Setup](#installation--setup)
-14. [Project Structure](#project-structure)
-15. [Usage Guide](#usage-guide)
-16. [API Reference](#api-reference)
+12. [Installation & Setup](#installation--setup)
+13. [Project Structure](#project-structure)
+14. [Usage Guide](#usage-guide)
 
 ---
 
@@ -34,20 +32,23 @@ An AI-powered credit risk assessment system with explainable ML, real-time predi
 
 This Credit Risk Predictor is a **production-ready machine learning system** designed to assess loan application risk in real-time. The system combines:
 
-- **XGBoost classifier** with isotonic calibration for accurate probability estimates
-- **SHAP explainability** for transparent, auditable decisions
-- **OpenAI GPT-4o integration** for natural language credit reports
-- **MLflow experiment tracking** for model versioning and monitoring
-- **RAG-enhanced reporting** for internal team use
+- **XGBoost pipeline** (ColumnTransformer + RandomUnderSampler + XGBClassifier) for accurate probability estimates
+- **SHAP TreeExplainer** for transparent, auditable decisions
+- **OpenAI GPT-4o-mini integration** for natural language credit reports
+- **MLflow experiment tracking** for model versioning and metric logging
+- **Portable model export** (`models/model.pkl`) so the app runs anywhere without a live MLflow server
 
-### Key Metrics Achieved
+### Key Metrics — Production Model (XGBoost Final Production)
 
-| Metric | Train | Test | Gap |
-|--------|-------|------|-----|
-| Average Precision (PR-AUC) | 0.312 | 0.289 | 0.023 |
-| F1 Score | 0.421 | 0.398 | 0.023 |
-| Recall (Default Detection) | 0.612 | 0.584 | 0.028 |
-| Precision | 0.321 | 0.298 | 0.023 |
+| Metric | Value |
+|--------|-------|
+| Test Average Precision (PR-AUC) | 0.223 |
+| Test F1 Score | 0.354 |
+| Test Recall | 0.725 |
+| Test Precision | 0.232 |
+| Optimal F1 Threshold | **0.631** |
+
+The production model prioritises **recall** (catching defaults) over precision, which is the correct trade-off for credit risk — missing a default is far more costly than a false alarm.
 
 ---
 
@@ -67,23 +68,58 @@ Financial institutions face significant challenges in credit decisioning:
 
 We built an **automated credit risk scoring system** that:
 
-- ✅ **Predicts probability of default (PD)** for each application
-- ✅ **Provides three-tier recommendations**: APPROVE / REVIEW / DECLINE
-- ✅ **Explains each decision** using SHAP feature attributions
-- ✅ **Generates professional reports** for documentation
-- ✅ **Tracks model performance** over time via MLflow
+- Predicts probability of default (PD) for each application
+- Provides two-tier recommendations: APPROVE / DECLINE
+- Explains each decision using SHAP feature attributions
+- Generates professional credit reports (AI or rule-based fallback)
+- Tracks model performance across all experiments via MLflow
 
-### Decision Thresholds
+### Decision Threshold
 
-The **optimal decision threshold** is retrieved automatically from the MLflow run that produced the registered model. The `f1_threshold` metric — computed during training by maximising F1 on the validation set — is stored in the run and loaded at application startup via `ModelService`. If the metric is absent the system falls back to **0.5**.
+The **optimal decision threshold (`f1_threshold`)** is computed during training by finding the probability cutoff that maximises F1 score on the held-out test set. It is logged as an MLflow metric and loaded automatically at application startup.
 
-| PD Range | Decision | Action |
-|----------|----------|--------|
-| < `f1_threshold` (default 0.5) | **APPROVE** | Auto-approve with standard terms |
-| `f1_threshold` – 50% | **REVIEW** | Manual review by credit committee |
-| ≥ 50% | **DECLINE** | Reject or request additional collateral |
+**How it is computed in training:**
 
-> The active threshold is displayed in the UI beneath the **Run Credit Assessment** button so analysts always know which value is in effect.
+```python
+precision, recall, thresholds = precision_recall_curve(y_test, y_test_prob)
+f1_scores = 2 * (precision * recall) / (precision + recall + 1e-10)
+ix = np.argmax(f1_scores[:-1])          # exclude last point (no threshold for it)
+optimal_threshold = float(thresholds[ix])
+mlflow.log_metric("f1_threshold", optimal_threshold)
+```
+
+**Why test data, not training data?**
+Computing the threshold on the test set gives a more realistic estimate of how the model will behave on unseen applications. Using training data would produce an optimistically low threshold (the model has already seen those samples).
+
+**How it is loaded by the app:**
+
+`ModelService._load_model_cached()` reads directly from the local `mlruns/` directory — no live MLflow server required:
+
+```python
+# 1. Read registered model meta.yaml to get exact run_id and model_id
+meta = (mlruns / "models" / MLFLOW_MODEL_NAME / "version-1" / "meta.yaml").read_text()
+# parse run_id, model_id, exp_id from meta
+
+# 2. Read f1_threshold from that run's metrics file
+thresh_file = mlruns / exp_id / run_id / "metrics" / "f1_threshold"
+threshold = float(thresh_file.read_text().strip().split()[1])
+
+# 3. Load model from mlartifacts/
+model = mlflow.sklearn.load_model(str(mlartifacts / exp_id / "models" / model_id / "artifacts"))
+
+return model, threshold, run_id
+```
+
+If `mlruns/` is not present (e.g. on Streamlit Cloud), the app falls back to `models/model.pkl` and `models/model_info.json` which are committed to the repository.
+
+**Current production threshold: `0.631`**
+
+| PD | Decision | Meaning |
+|----|----------|---------|
+| < 0.631 | **APPROVE** | Model predicts low default risk |
+| >= 0.631 | **DECLINE** | Model predicts high default risk |
+
+The active threshold is shown beneath the prediction result so analysts always know which value is in effect.
 
 ---
 
@@ -237,26 +273,15 @@ Raw Data → Preprocessing → Undersampling → XGBoost → Isotonic Calibratio
 
 ---
 
-## Model Logs & Experiment Tracking
+## Threshold Tuning & MLflow Tracking
 
 ### MLflow Integration
 
-All experiments are tracked in MLflow with:
+All experiments are tracked locally in `mlruns/` with:
 
-- **Metrics**: Train/Test AP, F1, Precision, Recall, ROC-AUC
+- **Metrics**: Train/Test AP, F1, Precision, Recall, `f1_threshold`
 - **Parameters**: All hyperparameters and preprocessing settings
-- **Artifacts**: Trained models, confusion matrices, SHAP plots
-- **Tags**: Model type, sampling strategy, calibration method
-
-### Accessing MLflow Dashboard
-
-```bash
-# Start MLflow server
-mlflow server --host 127.0.0.1 --port 5000
-
-# Open in browser
-http://127.0.0.1:5000
-```
+- **Artifacts**: Trained model pipelines registered under `Credit Risk Model Final`
 
 ### Logged Metrics Per Run
 
@@ -268,41 +293,43 @@ http://127.0.0.1:5000
 | `train_recall` / `test_recall` | Recall (sensitivity) |
 | `train_precision` / `test_precision` | Precision |
 | **`f1_threshold`** | **Optimal probability threshold — loaded by the app at startup** |
-| `roc_auc` | Area under ROC curve |
 
-### How the Threshold Is Loaded
+### Experiment Results (All Runs)
 
-`ModelService._load_model_cached()` performs the following steps every time the application starts (result is cached by `@st.cache_resource`):
+| Model | Test AP | F1 Threshold | Notes |
+|-------|---------|--------------|-------|
+| XGBoost with UnderSampling + Calibration | 0.232 | 0.155 | CalibratedClassifierCV |
+| Logistic Regression L1 (Weighted) | 0.231 | 0.643 | |
+| **XGBoost (Final Production)** | **0.223** | **0.631** | **Registered model** |
+| XGBoost with scale_pos_weight | 0.222 | 0.647 | |
+| Logistic Regression L1 with SMOTE | 0.223 | 0.633 | |
+| Random Forest with UnderSampling + Calibration | 0.217 | 0.131 | |
+| Random Forest (Weighted) | 0.208 | 0.496 | |
+| XGBoost with SMOTE | 0.195 | 0.251 | |
+| Random Forest with SMOTE | 0.184 | 0.273 | |
 
-```python
-# 1. Resolve the latest registered model version
-versions = client.get_latest_versions(MLFLOW_MODEL_NAME)
-uri = f"models:/{MLFLOW_MODEL_NAME}/{versions[0].version}"
+The production model was selected for its **clean pipeline** (no calibration wrapper), **high recall**, and **interpretable threshold** that generalises well to unseen data.
 
-# 2. Trace back to the originating training run
-run_id = client.get_model_version(MLFLOW_MODEL_NAME, versions[0].version).run_id
+### Viewing Experiment Results
 
-# 3. Pull f1_threshold from that run's metrics
-threshold = client.get_run(run_id).data.metrics.get("f1_threshold", 0.5)
+The **Model Monitoring** tab in the app displays all experiment runs with Train vs Test comparisons, loaded from `models/experiment_runs.json` (pre-exported, no MLflow server needed).
 
-# 4. Return both for use in predict()
-return model, threshold
+To view the full MLflow UI locally:
+
+```bash
+mlflow ui --backend-store-uri mlruns --port 5000
+# Open http://127.0.0.1:5000
 ```
 
-The loaded threshold is then used in `predict()` as:
+### Re-exporting After Retraining
 
-```python
-pred = int(prob >= self._threshold)  # not the model's default 0.5
+When you retrain and register a new model, run both export scripts to keep `models/` in sync:
+
+```bash
+python export_model.py
+python export_experiment_runs.py
+git add models/ && git commit -m "Update model export" && git push
 ```
-
-This ensures the live application always uses the **same threshold that was selected during training**, keeping evaluation metrics and production behaviour consistent.
-
-### Model Registry
-
-The production model is registered as:
-- **Name**: `Credit Risk Model Final`
-- **Stage**: Production
-- **Version**: Latest (auto-incremented)
 
 ---
 
@@ -492,8 +519,7 @@ report = report_service.generate_report(
     data=applicant_data,
     prob=0.32,
     pred=1,
-    shap_summary="DEBT_TO_INCOME: +0.15 (increases risk)...",
-    use_rag=False
+    shap_summary="DEBT_TO_INCOME: +0.15 (increases risk)..."
 )
 ```
 
@@ -523,57 +549,13 @@ If OpenAI is unavailable, the system falls back to a **rule-based report generat
 
 ---
 
-## RAG for Internal Teams
-
-### What is RAG?
-
-**Retrieval-Augmented Generation (RAG)** enhances AI reports with internal documentation context:
-
-- Model training methodology
-- Feature engineering decisions
-- Business rules and thresholds
-- Historical performance data
-
-### Enabling RAG Mode
-
-In the Streamlit app:
-1. Check "🔒 Use RAG Context (Internal Team)"
-2. Run assessment as normal
-3. Report will include internal context
-
-### RAG Context Sources
-
-The system retrieves context from:
-
-```
-Documents/
-├── Credit_Risk_Project_MLOps_Lifecycle.docx
-Python Notebooks/
-├── Modelling.ipynb (training decisions)
-├── interpretation_with_shap.ipynb (SHAP analysis)
-└── Data Cleaning.ipynb (preprocessing logic)
-```
-
-### Benefits for Internal Teams
-
-| Feature | Standard Report | RAG-Enhanced Report |
-|---------|-----------------|---------------------|
-| Risk factors | ✅ | ✅ |
-| SHAP explanation | ✅ | ✅ |
-| Model methodology | ❌ | ✅ |
-| Training decisions | ❌ | ✅ |
-| Business context | ❌ | ✅ |
-| Regulatory notes | ❌ | ✅ |
-
----
-
 ## Installation & Setup
 
 ### Prerequisites
 
 - Python 3.9+
 - pip or conda
-- MLflow server (for model serving)
+- No MLflow server required — model loads from `models/model.pkl`
 
 ### Quick Start
 
@@ -585,36 +567,32 @@ cd credit-risk-predictor
 # 2. Create virtual environment
 python -m venv loan_approval_env
 source loan_approval_env/bin/activate  # Linux/Mac
-# or
-.\loan_approval_env\Scripts\activate  # Windows
+.\loan_approval_env\Scripts\activate   # Windows
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set up environment variables
-cp .env.example .env
-# Edit .env with your OpenAI API key
+# 4. Set up environment variables (optional — only needed for AI reports)
+cp env.example .env
+# Edit .env and add your OPENAI_API_KEY
 
-# 5. Start MLflow server (in separate terminal)
-mlflow server --host 127.0.0.1 --port 5000
-
-# 6. Run the application
-streamlit run app_modular.py
+# 5. Run the application
+streamlit run app.py
 ```
 
 ### Environment Variables
 
-Create a `.env` file:
+Create a `.env` file (copy from `env.example`):
 
 ```env
-# MLflow
-MLFLOW_TRACKING_URI=http://127.0.0.1:5000
-
-# OpenAI (optional, for AI reports)
+# OpenAI (optional — AI reports disabled if not set)
 OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_MAX_TOKENS=800
 OPENAI_TEMPERATURE=0.7
+
+# MLflow (only needed if running mlflow ui locally)
+MLFLOW_TRACKING_URI=http://127.0.0.1:5000
 ```
 
 ---
@@ -623,43 +601,44 @@ OPENAI_TEMPERATURE=0.7
 
 ```
 Loan_approval_ml/
-├── app.py                    # Original monolithic app
-├── app_modular.py            # New modular app (recommended)
-├── requirements.txt          # Python dependencies
-├── .env                      # Environment variables
-├── README.md                 # This file
+├── app.py                        # Main Streamlit application
+├── requirements.txt              # Python dependencies
+├── env.example                   # Environment variable template
+├── export_model.py               # One-time script: export model.pkl
+├── export_experiment_runs.py     # One-time script: export experiment_runs.json
+├── README.md                     # This file
 │
-├── src/                      # Modular source code
-│   ├── __init__.py
-│   ├── config/               # Configuration
-│   │   ├── settings.py       # App settings
-│   │   └── constants.py      # Constants & samples
-│   ├── services/             # Business logic
-│   │   ├── model_service.py  # ML model operations
-│   │   ├── report_service.py # Report generation
-│   │   └── mlflow_service.py # Experiment tracking
-│   ├── components/           # UI components
-│   │   ├── styles.py         # CSS styling
-│   │   ├── input_form.py     # Input form
-│   │   ├── results.py        # Results display
-│   │   └── monitoring.py     # Monitoring tab
-│   └── utils/                # Utilities
-│       ├── helpers.py        # Helper functions
-│       └── validators.py     # Input validation
+├── models/                       # Portable model exports (committed to git)
+│   ├── model.pkl                 # Trained XGBoost pipeline (107 KB)
+│   ├── model_info.json           # run_id + f1_threshold = 0.631
+│   └── experiment_runs.json      # All 12 experiment runs with metrics
 │
-├── Python Notebooks/         # Jupyter notebooks
-│   ├── Data Cleaning.ipynb   # Data preprocessing
-│   ├── Modelling.ipynb       # Model training
-│   ├── eda.ipynb             # Exploratory analysis
-│   └── categories.json       # Feature categories
+├── src/                          # Modular source code
+│   ├── config/
+│   │   ├── settings.py           # Paths, MLflow config, OpenAI config
+│   │   └── constants.py          # Sample applicant profiles
+│   ├── services/
+│   │   ├── model_service.py      # Model loading, prediction, SHAP
+│   │   ├── report_service.py     # AI + fallback report generation
+│   │   └── mlflow_service.py     # Experiment data loading
+│   ├── components/
+│   │   ├── styles.py             # Custom CSS
+│   │   ├── input_form.py         # Applicant input form
+│   │   ├── results.py            # Prediction results display
+│   │   └── monitoring.py         # Model monitoring dashboard
+│   └── utils/
+│       ├── helpers.py            # Random sample generation
+│       └── validators.py         # Input validation
 │
-├── Datasets/                 # Raw data
-│   ├── application_data.csv
-│   └── previous_application.csv
+├── Python Notebooks/
+│   ├── Data Cleaning.ipynb       # Data preprocessing
+│   ├── Modelling.ipynb           # Model training & MLflow logging
+│   ├── eda.ipynb                 # Exploratory analysis
+│   └── categories.json           # Feature category options
 │
-├── mlruns/                   # MLflow experiment logs
-├── mlartifacts/              # MLflow model artifacts
-└── Documents/                # Project documentation
+├── mlruns/                       # MLflow local tracking (gitignored)
+├── mlartifacts/                  # MLflow model artifacts (gitignored)
+└── Datasets/                     # Raw data (gitignored)
 ```
 
 ---
@@ -669,77 +648,40 @@ Loan_approval_ml/
 ### Running the Application
 
 ```bash
-# Modular version (recommended)
-streamlit run app_modular.py
-
-# Original version
 streamlit run app.py
 ```
 
 ### Making Predictions
 
-1. Navigate to **Risk Assessment** tab
-2. Fill in applicant details or click "Generate Random"
-3. (Optional) Enable RAG for internal reports
-4. Click **Run Credit Assessment**
-5. Review verdict, probability, SHAP chart, and report
+1. Navigate to the **Risk Assessment** tab
+2. Fill in applicant details or click **Quick Fill** to generate a random sample
+3. Click **Run Credit Assessment**
+4. Review the verdict, probability score, SHAP feature chart, and AI-generated report
 
-### Monitoring Models
+The decision threshold (`0.631`) is shown beneath the result. Any application with predicted PD >= 0.631 is declined.
 
-1. Navigate to **Model Monitoring** tab
-2. View experiment results from MLflow
-3. Compare Train vs Test metrics
-4. Click "Open MLflow Dashboard" for detailed analysis
+### Viewing Model Monitoring
 
----
+1. Navigate to the **Model Monitoring** tab
+2. The pipeline architecture and calibration strategy are shown at the top
+3. The experiment results table shows all 12 runs with Train vs Test metrics
+4. Charts compare Average Precision and F1 across all models
 
-## API Reference
+Data is loaded from `models/experiment_runs.json` — no MLflow server required.
 
-### ModelService
+### Retraining the Model
 
-```python
-from src.services.model_service import ModelService
+1. Open `Python Notebooks/Modelling.ipynb`
+2. Run the final production cell (Cell 10 — `XGBoost(Final_Production)`)
+3. The cell logs `f1_threshold`, all test metrics, and registers the model as `Credit Risk Model Final`
+4. After training, re-export the portable files:
 
-service = ModelService()
-
-# Get prediction
-prob, pred, shap_summary, shap_df = service.predict(input_data)
-
-# Get categories for form
-categories = service.get_categories()
+```bash
+python export_model.py
+python export_experiment_runs.py
 ```
 
-### ReportService
-
-```python
-from src.services.report_service import ReportService
-
-service = ReportService()
-
-# Check if AI is available
-if service.is_ai_available:
-    report = service.generate_report(
-        data=input_data,
-        prob=0.32,
-        pred=1,
-        shap_summary="...",
-        use_rag=True  # Enable RAG for internal teams
-    )
-```
-
-### MLflowService
-
-```python
-from src.services.mlflow_service import MLflowService
-
-service = MLflowService()
-
-# Get experiment runs
-df = service.get_experiment_runs(max_results=20)
-
-# Get best model info
-best = service.get_best_model_info(df)
-```
+5. Commit and push `models/` to update the deployed app.
 
 ---
 
@@ -749,22 +691,6 @@ MIT License - See LICENSE file for details.
 
 ---
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request
-
----
-
 ## Support
 
-For issues or questions:
-- Open a GitHub issue
-- Contact: credit-risk-team@yourcompany.com
-
----
-
-*Built with ❤️ for responsible lending*
+For issues or questions, open a GitHub issue.

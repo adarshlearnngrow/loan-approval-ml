@@ -4,13 +4,12 @@ Model Service - Handles model loading, prediction, and SHAP explanations
 import json
 import pandas as pd
 import streamlit as st
-import mlflow
 import mlflow.sklearn
-from mlflow.tracking import MlflowClient
 
 from ..config.settings import (
-    PROJECT_ROOT, MLFLOW_TRACKING_URI, MLFLOW_MODEL_NAME, 
-    MLFLOW_EXPERIMENT_NAME, CATEGORIES_FILE
+    PROJECT_ROOT, MLFLOW_MODEL_NAME,
+    MLFLOW_EXPERIMENT_NAME, CATEGORIES_FILE,
+    MODEL_PKL_PATH, MODEL_INFO_PATH
 )
 
 
@@ -19,24 +18,43 @@ from ..config.settings import (
 
 @st.cache_resource(show_spinner="Loading model...")
 def _load_model_cached():
-    """Load model and optimal threshold from local MLflow directory (cached).
-    Reads the registered model's meta.yaml directly to get the exact run_id
-    and model_id — no guessing, always loads the correct registered model.
-    Returns (None, 0.5, 'Unknown') if the model is not found.
+    """Load model and optimal threshold (cached).
+
+    Strategy (in order):
+    1. models/model.pkl + models/model_info.json  — portable, works everywhere
+    2. mlruns/ + mlartifacts/                     — local dev with MLflow only
+
+    Returns (model, threshold, run_id).
     """
+    import pickle
+
+    # ── Strategy 1: exported model.pkl (portable) ─────────────────────────────
+    if MODEL_PKL_PATH.exists() and MODEL_INFO_PATH.exists():
+        try:
+            with open(MODEL_PKL_PATH, "rb") as f:
+                model = pickle.load(f)
+            info = json.loads(MODEL_INFO_PATH.read_text())
+            threshold = float(info.get("f1_threshold", 0.5))
+            run_id = info.get("run_id", "exported")
+            return model, threshold, run_id
+        except Exception as e:
+            st.warning(f"Could not load exported model.pkl: {e}. Trying mlruns/...")
+
+    # ── Strategy 2: local mlruns/ + mlartifacts/ ──────────────────────────────
     try:
         mlruns_dir = PROJECT_ROOT / "mlruns"
         mlartifacts_dir = PROJECT_ROOT / "mlartifacts"
 
-        # Step 1: Read the registered model meta.yaml to get run_id + model_id
-        # mlruns/models/<model_name>/version-*/meta.yaml
+        if not mlruns_dir.exists():
+            raise FileNotFoundError("mlruns/ directory not found")
+
+        # Read registered model meta.yaml for exact run_id + model_id
         model_registry_dir = mlruns_dir / "models" / MLFLOW_MODEL_NAME
         if not model_registry_dir.exists():
             raise FileNotFoundError(
                 f"Registered model '{MLFLOW_MODEL_NAME}' not found in mlruns/models/"
             )
 
-        # Pick the highest version
         version_dirs = sorted(
             [d for d in model_registry_dir.iterdir()
              if d.is_dir() and d.name.startswith("version-")],
@@ -46,51 +64,28 @@ def _load_model_cached():
         if not version_dirs:
             raise FileNotFoundError(f"No versions found for '{MLFLOW_MODEL_NAME}'")
 
-        meta_file = version_dirs[0] / "meta.yaml"
-        meta_text = meta_file.read_text()
-
-        # Parse run_id and model_id from meta.yaml (simple line scan, no yaml dep)
-        run_id = None
-        model_id = None
-        exp_id = None
+        meta_text = (version_dirs[0] / "meta.yaml").read_text()
+        run_id = model_id = exp_id = None
         for line in meta_text.splitlines():
             if line.startswith("run_id:"):
                 run_id = line.split(":", 1)[1].strip()
             elif line.startswith("model_id:"):
                 model_id = line.split(":", 1)[1].strip()
             elif line.startswith("storage_location:"):
-                # storage_location: mlflow-artifacts:/<exp_id>/models/...
                 loc = line.split(":", 2)[-1].strip().lstrip("/")
                 exp_id = loc.split("/")[0]
 
-        if not run_id or not model_id:
-            raise ValueError(f"Could not parse run_id/model_id from {meta_file}")
+        if not run_id or not model_id or not exp_id:
+            raise ValueError("Could not parse run_id/model_id/exp_id from meta.yaml")
 
-        # Step 2: Read f1_threshold from the run's metrics
+        # Read f1_threshold
         threshold = 0.5
-        if exp_id:
-            thresh_file = mlruns_dir / exp_id / run_id / "metrics" / "f1_threshold"
-        else:
-            # Search all experiment dirs for this run_id
-            thresh_file = None
-            for d in mlruns_dir.iterdir():
-                if d.is_dir() and d.name.isdigit():
-                    candidate = d / run_id / "metrics" / "f1_threshold"
-                    if candidate.exists():
-                        thresh_file = candidate
-                        break
+        thresh_file = mlruns_dir / exp_id / run_id / "metrics" / "f1_threshold"
+        if thresh_file.exists():
+            parts = thresh_file.read_text().strip().split()
+            threshold = float(parts[1]) if len(parts) >= 2 else float(parts[0])
 
-        if thresh_file and thresh_file.exists():
-            try:
-                parts = thresh_file.read_text().strip().split()
-                threshold = float(parts[1]) if len(parts) >= 2 else float(parts[0])
-            except Exception:
-                pass
-
-        # Step 3: Load model from mlartifacts/<exp_id>/models/<model_id>/artifacts/
-        if not exp_id:
-            raise FileNotFoundError("Could not determine experiment ID from storage_location")
-
+        # Load model from mlartifacts
         model_path = mlartifacts_dir / exp_id / "models" / model_id / "artifacts"
         if not (model_path / "MLmodel").exists():
             raise FileNotFoundError(f"MLmodel not found at {model_path}")
@@ -101,6 +96,13 @@ def _load_model_cached():
     except Exception as exc:
         st.error(f"Model could not be loaded: {exc}")
         return None, 0.5, "Unknown"
+
+
+@st.cache_resource
+def _get_shap_explainer(_base_model):
+    """Build and cache the SHAP TreeExplainer once per session."""
+    import shap
+    return shap.TreeExplainer(_base_model)
 
 
 @st.cache_data
@@ -172,19 +174,19 @@ class ModelService:
         
         try:
             import shap
-            from xgboost import XGBClassifier as _XGB
-            
+
             base = self._unwrap_xgboost(model)
             preproc = self._get_preproc_pipeline(model)
             
-            if isinstance(base, _XGB):
+            is_xgb = type(base).__name__ == "XGBClassifier"
+            if is_xgb:
                 X_t = preproc.transform(df_input) if preproc else df_input.values
                 try:
                     feat_names = preproc.get_feature_names_out() if preproc else list(df_input.columns)
-                except:
+                except Exception:
                     feat_names = [f"f{i}" for i in range(X_t.shape[1])]
                 
-                explainer = shap.TreeExplainer(base)
+                explainer = _get_shap_explainer(base)
                 shap_vals = explainer.shap_values(X_t)
                 
                 # Target the last class (Class 1 = Default) for explanation
@@ -206,8 +208,8 @@ class ModelService:
                     summary_lines.append(f"- {r['Feature']}: {r['SHAP']:.4f} ({direction})")
                 shap_summary = "\n".join(summary_lines)
                 
-        except Exception as e:
-            pass  # SHAP calculation failed silently
+        except Exception:
+            pass
         
         return shap_summary, shap_df
     
@@ -216,27 +218,29 @@ class ModelService:
         """Unwrap calibrated/pipeline to get raw XGBClassifier"""
         if hasattr(m, "calibrated_classifiers_"):
             return ModelService._unwrap_xgboost(m.calibrated_classifiers_[0].estimator)
+        if hasattr(m, "steps"):
+            # Walk all steps and return the first one that looks like a classifier
+            for _, step in reversed(m.steps):
+                result = ModelService._unwrap_xgboost(step)
+                if type(result).__name__ == "XGBClassifier":
+                    return result
+            return ModelService._unwrap_xgboost(m.steps[-1][1])
         if hasattr(m, "named_steps"):
             return ModelService._unwrap_xgboost(list(m.named_steps.values())[-1])
-        if hasattr(m, "steps"):
-            return ModelService._unwrap_xgboost(m.steps[-1][1])
         return m
     
     @staticmethod
     def _get_preproc_pipeline(m):
-        """Return a Pipeline of all transformer steps (skip samplers & classifiers)"""
+        """Return a sklearn Pipeline of transformer-only steps (no samplers, no classifiers)."""
         if hasattr(m, "calibrated_classifiers_"):
             return ModelService._get_preproc_pipeline(m.calibrated_classifiers_[0].estimator)
         if hasattr(m, "steps"):
             from sklearn.pipeline import Pipeline as _P
-            from sklearn.base import ClassifierMixin
             transformer_steps = [
                 (name, step) for name, step in m.steps
-                if hasattr(step, "transform") and not isinstance(step, ClassifierMixin)
+                if hasattr(step, "transform")
+                and not hasattr(step, "predict_proba")   # exclude classifiers
+                and not hasattr(step, "fit_resample")    # exclude samplers (imblearn)
             ]
             return _P(transformer_steps) if transformer_steps else None
-        if hasattr(m, "named_steps"):
-            return ModelService._get_preproc_pipeline(
-                type("_P", (), {"steps": list(m.named_steps.items())})()
-            )
         return None

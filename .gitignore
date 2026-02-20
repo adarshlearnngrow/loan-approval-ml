@@ -28,6 +28,19 @@ loan_approval_env/
 *.csv
 *.xlsx
 
+# MLflow local tracking (too large for git, use models/ instead)
+mlruns/
+mlartifacts/
+
+# Raw datasets (too large for git)
+Datasets/
+
+# Exported model IS tracked (small, portable)
+!models/
+!models/model.pkl
+!models/model_info.json
+!models/experiment_runs.json
+
 # Ignore secrets and credentials
 *.key
 *.pem
