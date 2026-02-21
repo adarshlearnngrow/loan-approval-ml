@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from ..services.mlflow_service import MLflowService
-from ..config.settings import MLFLOW_TRACKING_URI
 
 
 def render_monitoring_tab():
@@ -19,41 +18,48 @@ def render_monitoring_tab():
     
     st.markdown("### Experiment Results — Train vs Test")
     
-    col_m1, col_m2 = st.columns([7, 3])
-    with col_m1:
-        st.markdown(
-            "<div style='color:#64748b;font-size:0.85rem;margin-bottom:1rem;'>"
-            "Metrics are pulled live from your local MLflow tracking server. "
-            "Higher Average Precision = better. Watch for large Train–Test gaps (overfitting)."
-            "</div>", unsafe_allow_html=True
-        )
-    with col_m2:
-        st.link_button("Open MLflow Dashboard", MLFLOW_TRACKING_URI, use_container_width=True)
+    st.markdown(
+        "<div style='color:#64748b;font-size:0.85rem;margin-bottom:1rem;'>"
+        "Higher Average Precision = better. Watch for large Train–Test gaps (overfitting)."
+        "</div>", unsafe_allow_html=True
+    )
     
-    try:
-        mlflow_service = MLflowService()
-        df_metrics = mlflow_service.get_experiment_runs()
-        
-        if df_metrics.empty:
-            st.info("No experiments found. Run your notebook to log results.")
-            return
-        
-        # Display metrics table
-        _render_metrics_table(df_metrics)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Charts
-        _render_ap_comparison_chart(df_metrics)
-        _render_f1_comparison_chart(df_metrics)
-        
-        # Best model callout
-        best_info = mlflow_service.get_best_model_info(df_metrics)
-        if best_info:
-            _render_best_model_callout(best_info)
-            
-    except Exception as e:
-        st.error(f"Could not load MLflow metrics: {e}")
+    # Load from pre-exported JSON (fast, no network calls)
+    df_metrics = MLflowService.load_from_json()
+
+    if df_metrics.empty:
+        st.info("No experiment data available.")
+        return
+
+    # Display metrics table
+    _render_metrics_table(df_metrics)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Charts
+    _render_ap_comparison_chart(df_metrics)
+    _render_f1_comparison_chart(df_metrics)
+
+    # Best model callout
+    best_info = _get_best_model_info(df_metrics)
+    if best_info:
+        _render_best_model_callout(best_info)
+
+
+def _get_best_model_info(df: pd.DataFrame) -> dict:
+    """Get information about the best performing model from DataFrame"""
+    if df.empty:
+        return {}
+    best = df.iloc[0]
+    gap = best.get("AP Gap", 0)
+    return {
+        "name": best["Model"],
+        "test_ap": best["Test AP"],
+        "test_f1": best.get("Test F1"),
+        "test_recall": best.get("Test Recall"),
+        "ap_gap": gap,
+        "generalization": "good" if isinstance(gap, float) and gap < 0.1 else "concerning"
+    }
 
 
 def _render_framework_overview():
@@ -108,20 +114,23 @@ def _render_metrics_table(df: pd.DataFrame):
             return "color: #fbbf24"  # amber
         return "color: #4ade80"      # green - healthy
     
+    has_links = "View" in df.columns and df["View"].str.startswith("http").any()
+    col_cfg = {}
+    if has_links:
+        col_cfg["View"] = st.column_config.LinkColumn(
+            "View",
+            help="Open this specific run in MLflow UI",
+            validate=r"^http://",
+            display_text="Inspect ↗"
+        )
+    display_df = df.drop(columns=["View"]) if not has_links else df
     st.dataframe(
-        df.style
+        display_df.style
         .map(colour_gap, subset=["AP Gap"])
         .format(precision=3, na_rep="—"),
         use_container_width=True,
         hide_index=True,
-        column_config={
-            "View": st.column_config.LinkColumn(
-                "View",
-                help="Open this specific run in MLflow UI",
-                validate=r"^http://",
-                display_text="Inspect ↗"
-            )
-        }
+        column_config=col_cfg
     )
 
 

@@ -1,0 +1,247 @@
+{
+  "experiment_name": "Credit Risk Modelling Project v6",
+  "runs": [
+    {
+      "run_id": "3f8a747ee978496280c886282fadf4ae",
+      "run_name": "XGBoost with UnderSampling + Calibration",
+      "metrics": {
+        "f1_threshold": 0.154644,
+        "train_avg_precision": 0.227698,
+        "train_f1": 0.29669,
+        "train_precision": 0.234496,
+        "train_recall": 0.403782,
+        "test_avg_precision": 0.232276,
+        "test_f1": 0.295865,
+        "test_precision": 0.234389,
+        "test_recall": 0.401053
+      },
+      "params": {
+        "calibrated": "True",
+        "model__learning_rate": "0.1",
+        "model__max_depth": "3",
+        "model__n_estimators": "50",
+        "model__subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "93cc1b3f766442dd857fd2eef83b61cc",
+      "run_name": "Logistic Regression L1 (Weighted)",
+      "metrics": {
+        "f1_threshold": 0.643379,
+        "train_avg_precision": 0.204751,
+        "train_f1": 0.282353,
+        "train_precision": 0.215499,
+        "train_recall": 0.409344,
+        "test_avg_precision": 0.230848,
+        "test_f1": 0.294726,
+        "test_precision": 0.224498,
+        "test_recall": 0.428894
+      },
+      "params": {
+        "calibrated": "False",
+        "model__C": "0.1"
+      }
+    },
+    {
+      "run_id": "ac3717aeceb1482fbdcae9d439d525fe",
+      "run_name": "Logistic Regression L1 with SMOTE",
+      "metrics": {
+        "f1_threshold": 0.632867,
+        "train_avg_precision": 0.200663,
+        "train_f1": 0.278244,
+        "train_precision": 0.205637,
+        "train_recall": 0.430108,
+        "test_avg_precision": 0.222847,
+        "test_f1": 0.2887,
+        "test_precision": 0.213209,
+        "test_recall": 0.446953
+      },
+      "params": {
+        "calibrated": "False",
+        "model__C": "0.01"
+      }
+    },
+    {
+      "run_id": "9426c2894a7d47c6b74dcc970e3237ea",
+      "run_name": "XGBoost(Final_Production)",
+      "metrics": {
+        "f1_threshold": 0.630774,
+        "test_avg_precision": 0.222846,
+        "test_f1": 0.297686,
+        "test_precision": 0.220101,
+        "test_recall": 0.459744
+      },
+      "params": {
+        "learning_rate": "0.1",
+        "max_depth": "3",
+        "n_estimators": "50",
+        "random_state": "42",
+        "subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "bf5578944c124f0381a936c2f9107bd1",
+      "run_name": "XGBoost(Final_Production)",
+      "metrics": {
+        "test_avg_precision": 0.222846,
+        "test_f1": 0.248542,
+        "test_precision": 0.152392,
+        "test_recall": 0.673439
+      },
+      "params": {
+        "learning_rate": "0.1",
+        "max_depth": "3",
+        "n_estimators": "50",
+        "random_state": "42",
+        "subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "d678b2efc8cf4f5d8eea761c39e8a849",
+      "run_name": "XGBoost(Final_Production)",
+      "metrics": {
+        "f1_threshold": 0.630774,
+        "test_avg_precision": 0.222846,
+        "test_f1": 0.297686,
+        "test_precision": 0.220101,
+        "test_recall": 0.459744
+      },
+      "params": {
+        "learning_rate": "0.1",
+        "max_depth": "3",
+        "n_estimators": "50",
+        "random_state": "42",
+        "subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "dc1fa0f8662a409e9ae7165566126b4b",
+      "run_name": "XGBoost with scale_pos_weight",
+      "metrics": {
+        "f1_threshold": 0.646602,
+        "train_avg_precision": 0.230545,
+        "train_f1": 0.299474,
+        "train_precision": 0.232103,
+        "train_recall": 0.42195,
+        "test_avg_precision": 0.222034,
+        "test_f1": 0.300427,
+        "test_precision": 0.232741,
+        "test_recall": 0.423627
+      },
+      "params": {
+        "calibrated": "False",
+        "model__learning_rate": "0.1",
+        "model__max_depth": "3",
+        "model__n_estimators": "50",
+        "model__subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "3a4b156ab30c4ac3b48edd964fe15ea0",
+      "run_name": "Logistic Regression L1 with UnderSampling + Calibration",
+      "metrics": {
+        "f1_threshold": 0.13135,
+        "train_avg_precision": 0.201308,
+        "train_f1": 0.27729,
+        "train_precision": 0.202564,
+        "train_recall": 0.439377,
+        "test_avg_precision": 0.218784,
+        "test_f1": 0.287925,
+        "test_precision": 0.209128,
+        "test_recall": 0.462002
+      },
+      "params": {
+        "calibrated": "True",
+        "model__C": "0.1"
+      }
+    },
+    {
+      "run_id": "c34438a0bcc547bcbcceeece377182b5",
+      "run_name": "Random Forest with UnderSampling + Calibration",
+      "metrics": {
+        "f1_threshold": 0.174356,
+        "train_avg_precision": 0.315927,
+        "train_f1": 0.369661,
+        "train_precision": 0.320621,
+        "train_recall": 0.436411,
+        "test_avg_precision": 0.216919,
+        "test_f1": 0.290873,
+        "test_precision": 0.261733,
+        "test_recall": 0.327314
+      },
+      "params": {
+        "calibrated": "True",
+        "model__max_depth": "10",
+        "model__min_samples_leaf": "1",
+        "model__min_samples_split": "5",
+        "model__n_estimators": "100"
+      }
+    },
+    {
+      "run_id": "d89350a6af454b2e98a5bddfb2bd1f98",
+      "run_name": "Random Forest (Weighted)",
+      "metrics": {
+        "f1_threshold": 0.496354,
+        "train_avg_precision": 0.982435,
+        "train_f1": 0.933721,
+        "train_precision": 0.914947,
+        "train_recall": 0.953281,
+        "test_avg_precision": 0.208175,
+        "test_f1": 0.174148,
+        "test_precision": 0.309615,
+        "test_recall": 0.121144
+      },
+      "params": {
+        "calibrated": "False",
+        "model__max_depth": "None",
+        "model__min_samples_leaf": "4",
+        "model__min_samples_split": "5",
+        "model__n_estimators": "100"
+      }
+    },
+    {
+      "run_id": "9ce3e99ffcd0479fbe508264fbed9e99",
+      "run_name": "XGBoost with SMOTE",
+      "metrics": {
+        "f1_threshold": 0.251224,
+        "train_avg_precision": 0.483662,
+        "train_f1": 0.458808,
+        "train_precision": 0.478278,
+        "train_recall": 0.44086,
+        "test_avg_precision": 0.194533,
+        "test_f1": 0.240347,
+        "test_precision": 0.252275,
+        "test_recall": 0.229496
+      },
+      "params": {
+        "calibrated": "False",
+        "model__learning_rate": "0.2",
+        "model__max_depth": "7",
+        "model__n_estimators": "50",
+        "model__subsample": "1.0"
+      }
+    },
+    {
+      "run_id": "d3a90b5c83a944128f54cf0ddf2094a2",
+      "run_name": "Random Forest with SMOTE",
+      "metrics": {
+        "f1_threshold": 0.272551,
+        "train_avg_precision": 0.92648,
+        "train_f1": 0.844166,
+        "train_precision": 0.865887,
+        "train_recall": 0.823508,
+        "test_avg_precision": 0.184388,
+        "test_f1": 0.218022,
+        "test_precision": 0.262156,
+        "test_recall": 0.186606
+      },
+      "params": {
+        "calibrated": "False",
+        "model__max_depth": "None",
+        "model__min_samples_leaf": "4",
+        "model__min_samples_split": "5",
+        "model__n_estimators": "100"
+      }
+    }
+  ]
+}

@@ -14,7 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 import streamlit as st
 
-from src.config.settings import APP_TITLE, APP_SUBTITLE, APP_VERSION
+from src.config.settings import APP_TITLE, APP_SUBTITLE, APP_VERSION  # APP_VERSION used in header badge
 from src.components.styles import inject_custom_css
 from src.components.input_form import render_input_form
 from src.components.results import render_results
@@ -49,10 +49,9 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Main Tabs ──────────────────────────────────────────────────────────────────
-tab_assess, tab_monitor, tab_about = st.tabs([
+tab_assess, tab_monitor = st.tabs([
     "Risk Assessment",
     "Model Monitoring",
-    "About"
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -108,63 +107,3 @@ with tab_assess:
 with tab_monitor:
     render_monitoring_tab()
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAB 3: ABOUT
-# ══════════════════════════════════════════════════════════════════════════════
-with tab_about:
-    st.markdown("### About This Application")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("""
-        <div class="section-card">
-        <b>Purpose</b><br><br>
-        This Credit Risk Predictor is an AI-powered decision support system designed to:
-        <ul>
-            <li>Assess loan application risk in real-time</li>
-            <li>Provide explainable AI insights via SHAP</li>
-            <li>Generate professional credit reports</li>
-            <li>Monitor model performance over time</li>
-        </ul>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="section-card">
-        <b>Technology Stack</b><br><br>
-        <ul>
-            <li><b>ML Framework:</b> XGBoost with Isotonic Calibration</li>
-            <li><b>Experiment Tracking:</b> MLflow</li>
-            <li><b>Explainability:</b> SHAP (TreeExplainer)</li>
-            <li><b>Report Generation:</b> OpenAI GPT-4o</li>
-            <li><b>Frontend:</b> Streamlit</li>
-        </ul>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("""
-        <div class="section-card">
-        <b>Important Disclaimer</b><br><br>
-        This tool is designed as a <b>decision support system</b>, not a replacement
-        for human judgment. All credit decisions should be reviewed by qualified
-        personnel before final approval.
-        <br><br>
-        The model predictions are based on historical data patterns and may not
-        capture all relevant factors for individual cases.
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div class="section-card">
-        <b>Version Information</b><br><br>
-        <ul>
-            <li><b>Application Version:</b> {APP_VERSION}</li>
-            <li><b>Model:</b> {model_service.get_model().__class__.__name__ if model_service.get_model() else "None"}</li>
-            <li><b>Run ID:</b> <code>{model_service.run_id}</code></li>
-            <li><b>Decision Threshold:</b> <code>{model_service.threshold:.3f}</code></li>
-            <li><b>AI Reports:</b> {'Enabled' if report_service.is_ai_available else 'Disabled (No API Key)'}</li>
-        </ul>
-        </div>
-        """, unsafe_allow_html=True)
