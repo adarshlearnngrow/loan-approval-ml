@@ -43,9 +43,9 @@ This Credit Risk Predictor is a **production-ready machine learning system** des
 | Metric | Value |
 |--------|-------|
 | Test Average Precision (PR-AUC) | 0.223 |
-| Test F1 Score | 0.354 |
-| Test Recall | 0.725 |
-| Test Precision | 0.232 |
+| Test F1 Score | 0.298 |
+| Test Recall | 0.460 |
+| Test Precision | 0.220 |
 | Optimal F1 Threshold | **0.631** |
 
 The production model prioritises **recall** (catching defaults) over precision, which is the correct trade-off for credit risk — missing a default is far more costly than a false alarm.
@@ -225,46 +225,37 @@ Top 10 most influential features:
 
 | Model | Sampling Strategy | Calibration | Test AP | Test F1 |
 |-------|-------------------|-------------|---------|---------|
-| XGBoost | Undersampling | Isotonic | **0.289** | **0.398** |
-| XGBoost | SMOTE | None | 0.271 | 0.372 |
-| XGBoost | Class Weights | None | 0.265 | 0.361 |
-| Random Forest | Undersampling | Isotonic | 0.248 | 0.342 |
-| Logistic Regression | SMOTE | Platt | 0.231 | 0.318 |
+| XGBoost | None (Final Production) | None | **0.223** | **0.298** |
+| XGBoost | Undersampling | Isotonic | 0.232 | 0.296 |
+| Logistic Regression | Class Weights | None | 0.231 | 0.295 |
+| XGBoost | Class Weights | None | 0.222 | 0.300 |
+| Logistic Regression | SMOTE | None | 0.223 | 0.289 |
 
-### Final Model: XGBoost with Isotonic Calibration
+### Final Model: XGBoost (Production)
 
 **Why XGBoost?**
 - Best performance on imbalanced data
 - Native handling of missing values
 - Fast inference for real-time predictions
 - SHAP TreeExplainer compatibility
+- Clean pipeline without calibration wrapper for easier deployment
 
-**Why Isotonic Calibration?**
-- Undersampling distorts probability estimates
-- Isotonic regression corrects probabilities to real-world frequencies
-- Essential for risk-based pricing and regulatory compliance
-
-### Hyperparameters (Optimized via RandomizedSearchCV)
+### Hyperparameters (Production Model)
 
 ```python
 {
-    'n_estimators': 300,
-    'max_depth': 6,
-    'learning_rate': 0.05,
-    'subsample': 0.8,
-    'colsample_bytree': 0.8,
-    'min_child_weight': 3,
-    'gamma': 0.1,
-    'reg_alpha': 0.1,
-    'reg_lambda': 1.0,
-    'scale_pos_weight': 1  # Handled by undersampling
+    'n_estimators': 50,
+    'max_depth': 3,
+    'learning_rate': 0.1,
+    'subsample': 1.0,
+    'random_state': 42
 }
 ```
 
 ### Training Pipeline
 
 ```
-Raw Data → Preprocessing → Undersampling → XGBoost → Isotonic Calibration → Final Model
+Raw Data → Preprocessing → XGBoost → Final Model
               ↓
     - Log transform (skewed features)
     - StandardScaler (numeric)
