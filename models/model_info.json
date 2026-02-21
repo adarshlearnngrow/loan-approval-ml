@@ -1,6 +1,6 @@
 {
-  "run_id": "9426c2894a7d47c6b74dcc970e3237ea",
+  "run_id": "203160c728f14070a42b7b8b28a72905",
   "model_name": "Credit Risk Model Final",
-  "model_version": "1",
-  "f1_threshold": 0.6307744979858398
+  "model_version": "2",
+  "f1_threshold": 0.1514926552772522
 }

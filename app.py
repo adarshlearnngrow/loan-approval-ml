@@ -98,7 +98,8 @@ with tab_assess:
             pred=pred,
             report_html=report_html,
             shap_df=shap_df,
-            is_ai_report=report_service.is_ai_available
+            is_ai_report=report_service.is_ai_available,
+            threshold=model_service.threshold
         )
 
 # ══════════════════════════════════════════════════════════════════════════════

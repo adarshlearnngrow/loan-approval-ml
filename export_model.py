@@ -15,7 +15,7 @@ SRC_MODEL = (
     / "mlartifacts"
     / "286339840280967947"
     / "models"
-    / "m-444aaad581864569995b764353ea6ffb"
+    / "m-d2140a0a189542b6a976da0d0ffe27d6"
     / "artifacts"
     / "model.pkl"
 )
@@ -35,7 +35,7 @@ thresh_file = (
     PROJECT_ROOT
     / "mlruns"
     / "286339840280967947"
-    / "9426c2894a7d47c6b74dcc970e3237ea"
+    / "203160c728f14070a42b7b8b28a72905"
     / "metrics"
     / "f1_threshold"
 )
@@ -49,9 +49,9 @@ else:
 
 # ── Write model_info.json ──────────────────────────────────────────────────────
 info = {
-    "run_id":        "9426c2894a7d47c6b74dcc970e3237ea",
+    "run_id":        "203160c728f14070a42b7b8b28a72905",
     "model_name":    "Credit Risk Model Final",
-    "model_version": "1",
+    "model_version": "2",
     "f1_threshold":  threshold,
 }
 DEST_INFO.write_text(json.dumps(info, indent=2))

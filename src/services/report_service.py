@@ -118,30 +118,41 @@ SHAP EXPLANATION (Feature Contributions):
 
 Generate a structured credit risk report with these sections:
 
-1. **Executive Summary** - Brief overview of the assessment outcome
-2. **Risk Analysis** - Key risk factors identified from the data and SHAP values
+1. Executive Summary - Brief overview of the assessment outcome
+2. Risk Analysis - Key risk factors identified from the data and SHAP values
    - POSITIVE SHAP = increases default risk
    - NEGATIVE SHAP = reduces default risk
-3. **Applicant Profile Strengths** - Positive aspects of the application
-4. **Areas of Concern** - Specific red flags requiring attention
-5. **Recommendations**
+3. Applicant Profile Strengths - Positive aspects of the application
+4. Areas of Concern - Specific red flags requiring attention
+5. Recommendations
    - For the Customer: Steps to improve creditworthiness
    - For the Bank: Due diligence suggestions and conditions
-6. **Decision Rationale** - Why this verdict was reached
+6. Decision Rationale - Why this verdict was reached
 
-Format with HTML tags (<b>, <br>, <ul>, <li>) for Streamlit display.
-Be concise, data-driven, and professional. Do NOT use markdown headers (#).
+IMPORTANT: Output ONLY raw HTML. Use <b> for bold, <br> for line breaks, <ul><li> for lists.
+Do NOT escape HTML entities. Do NOT use markdown. Output the HTML directly as if writing an HTML file.
+Start directly with the content - no preamble or code blocks.
 """
             response = self._client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
-                    {"role": "system", "content": "You are an expert financial analyst specializing in credit risk assessment. Provide clear, actionable insights."},
+                    {"role": "system", "content": "You are an expert financial analyst. Output raw HTML only - no markdown, no escaped entities, no code blocks."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=OPENAI_MAX_TOKENS,
                 temperature=OPENAI_TEMPERATURE
             )
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content.strip()
+            
+            # Remove code block markers if AI added them
+            if content.startswith("```html"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+            
             return f'<div class="report-box">{content}</div>'
             
         except Exception as e:

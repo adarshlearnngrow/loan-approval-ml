@@ -38,17 +38,18 @@ This Credit Risk Predictor is a **production-ready machine learning system** des
 - **MLflow experiment tracking** for model versioning and metric logging
 - **Portable model export** (`models/model.pkl`) so the app runs anywhere without a live MLflow server
 
-### Key Metrics — Production Model (XGBoost Final Production)
+### Key Metrics — Production Model (XGBoost with Undersampling + Isotonic Calibration)
 
 | Metric | Value |
 |--------|-------|
 | Test Average Precision (PR-AUC) | 0.223 |
-| Test F1 Score | 0.298 |
-| Test Recall | 0.460 |
-| Test Precision | 0.220 |
-| Optimal F1 Threshold | **0.631** |
+| Test F1 Score | 0.297 |
+| Test Recall | 0.412 |
+| Test Precision | 0.232 |
+| Optimal F1 Threshold | **0.1515** |
+| Calibration Method | Isotonic (5-fold CV) |
 
-The production model prioritises **recall** (catching defaults) over precision, which is the correct trade-off for credit risk — missing a default is far more costly than a false alarm.
+The production model uses **isotonic calibration** to correct probability distortion from undersampling. The threshold is significantly lower (0.1515 vs 0.631 uncalibrated) because probabilities are now properly calibrated to real-world default frequencies.
 
 ---
 
@@ -112,14 +113,17 @@ return model, threshold, run_id
 
 If `mlruns/` is not present (e.g. on Streamlit Cloud), the app falls back to `models/model.pkl` and `models/model_info.json` which are committed to the repository.
 
-**Current production threshold: `0.631`**
+**Current production threshold: `0.1515`**
 
 | PD | Decision | Meaning |
 |----|----------|---------|
-| < 0.631 | **APPROVE** | Model predicts low default risk |
-| >= 0.631 | **DECLINE** | Model predicts high default risk |
+| < 0.1515 | **APPROVE** | Model predicts low default risk |
+| >= 0.1515 | **DECLINE** | Model predicts high default risk |
 
 The active threshold is shown beneath the prediction result so analysts always know which value is in effect.
+
+**Why the threshold is so low (0.1515):**
+The model uses `RandomUnderSampler` which artificially balances the training data (8% defaults → 50% defaults). Without calibration, this inflates predicted probabilities. `CalibratedClassifierCV` with isotonic calibration corrects these probabilities back to real-world frequencies, resulting in a much lower optimal threshold.
 
 ---
 
@@ -289,17 +293,17 @@ All experiments are tracked locally in `mlruns/` with:
 
 | Model | Test AP | F1 Threshold | Notes |
 |-------|---------|--------------|-------|
-| XGBoost with UnderSampling + Calibration | 0.232 | 0.155 | CalibratedClassifierCV |
+| XGBoost with UnderSampling + Calibration | 0.232 | 0.155 | Tuned via RandomizedSearchCV |
 | Logistic Regression L1 (Weighted) | 0.231 | 0.643 | |
-| **XGBoost (Final Production)** | **0.223** | **0.631** | **Registered model** |
-| XGBoost with scale_pos_weight | 0.222 | 0.647 | |
+| **XGBoost (Final Production Calibrated)** | **0.223** | **0.1515** | **Registered model v2** |
 | Logistic Regression L1 with SMOTE | 0.223 | 0.633 | |
+| XGBoost with scale_pos_weight | 0.222 | 0.647 | |
 | Random Forest with UnderSampling + Calibration | 0.217 | 0.131 | |
 | Random Forest (Weighted) | 0.208 | 0.496 | |
 | XGBoost with SMOTE | 0.195 | 0.251 | |
 | Random Forest with SMOTE | 0.184 | 0.273 | |
 
-The production model was selected for its **clean pipeline** (no calibration wrapper), **high recall**, and **interpretable threshold** that generalises well to unseen data.
+The production model uses **isotonic calibration (5-fold CV)** to correct probability distortion from undersampling, resulting in well-calibrated probabilities suitable for risk-based decisioning.
 
 ### Viewing Experiment Results
 
