@@ -1,8 +1,9 @@
 artifact_uri: mlflow-artifacts:/286339840280967947/9426c2894a7d47c6b74dcc970e3237ea/artifacts
+deleted_time: 1771669384496
 end_time: 1771537390064
 entry_point_name: ''
 experiment_id: '286339840280967947'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 9426c2894a7d47c6b74dcc970e3237ea
 run_name: XGBoost(Final_Production)
 source_name: ''
