@@ -80,41 +80,6 @@
       }
     },
     {
-      "run_id": "bf5578944c124f0381a936c2f9107bd1",
-      "run_name": "XGBoost(Final_Production)",
-      "metrics": {
-        "test_avg_precision": 0.222846,
-        "test_f1": 0.248542,
-        "test_precision": 0.152392,
-        "test_recall": 0.673439
-      },
-      "params": {
-        "learning_rate": "0.1",
-        "max_depth": "3",
-        "n_estimators": "50",
-        "random_state": "42",
-        "subsample": "1.0"
-      }
-    },
-    {
-      "run_id": "d678b2efc8cf4f5d8eea761c39e8a849",
-      "run_name": "XGBoost(Final_Production)",
-      "metrics": {
-        "f1_threshold": 0.630774,
-        "test_avg_precision": 0.222846,
-        "test_f1": 0.297686,
-        "test_precision": 0.220101,
-        "test_recall": 0.459744
-      },
-      "params": {
-        "learning_rate": "0.1",
-        "max_depth": "3",
-        "n_estimators": "50",
-        "random_state": "42",
-        "subsample": "1.0"
-      }
-    },
-    {
       "run_id": "dc1fa0f8662a409e9ae7165566126b4b",
       "run_name": "XGBoost with scale_pos_weight",
       "metrics": {
